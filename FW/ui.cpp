@@ -2,6 +2,7 @@
 #include "pico/multicore.h"
 #include "ui.h"
 #include <hardware/flash.h>
+#include "periph_assignment.h"
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -75,13 +76,13 @@ bool ui::check_button(unsigned button){
 // Display
 ////////////////////////////////////////////////////////////////////////////////
 void ui::setup_display() {
-  i2c_init(i2c1, 400000);
+  i2c_init(pI2CInstance, 400000);
   gpio_set_function(PIN_DISPLAY_SDA, GPIO_FUNC_I2C);
   gpio_set_function(PIN_DISPLAY_SCL, GPIO_FUNC_I2C);
   gpio_pull_up(PIN_DISPLAY_SDA);
   gpio_pull_up(PIN_DISPLAY_SCL);
   disp.external_vcc=false;
-  ssd1306_init(&disp, 128, 64, 0x3C, i2c1); 
+  ssd1306_init(&disp, 128, 64, 0x3C, pI2CInstance); 
 }
 
 void ui::display_clear()

@@ -6,7 +6,7 @@
 
 % c-sdk {
 #include "hardware/clocks.h"
-static inline float nco_program_init(PIO pio, uint sm, uint offset, float tuned_frequency) {
+static inline float nco_program_init(PIO pio, uint sm, uint offset, uint pin, float tuned_frequency) {
     pio_sm_config c = hello_program_get_default_config(offset);
 
     // Map the state machine's OUT pin group to one pin, namely the `pin`
@@ -14,15 +14,15 @@ static inline float nco_program_init(PIO pio, uint sm, uint offset, float tuned_
     sm_config_set_set_pins(&c, 0, 2);
 
     // Set this pin's GPIO function (connect PIO to the pad)
-    pio_gpio_init(pio, 0);
-    pio_gpio_init(pio, 1);
-    gpio_set_drive_strength(0, GPIO_DRIVE_STRENGTH_2MA);
-    gpio_set_drive_strength(1, GPIO_DRIVE_STRENGTH_2MA);
-    gpio_set_slew_rate(0, GPIO_SLEW_RATE_SLOW);
-    gpio_set_slew_rate(1, GPIO_SLEW_RATE_SLOW);
+    pio_gpio_init(pio, pin);
+    pio_gpio_init(pio, pin + 1);
+    gpio_set_drive_strength(pin, GPIO_DRIVE_STRENGTH_2MA);
+    gpio_set_drive_strength(pin + 1, GPIO_DRIVE_STRENGTH_2MA);
+    gpio_set_slew_rate(pin, GPIO_SLEW_RATE_SLOW);
+    gpio_set_slew_rate(pin + 1, GPIO_SLEW_RATE_SLOW);
 
     // Set the pin direction to output at the PIO
-    pio_sm_set_consecutive_pindirs(pio, sm, 0, 2, true);
+    pio_sm_set_consecutive_pindirs(pio, sm, pin, 2, true);
 
 
     //We can get closer to the derired frequency if we allow small adjustments

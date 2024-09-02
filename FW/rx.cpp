@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include "rx.h"
+#include "periph_assignment.h"
 
 
 //buffers and dma for ADC
@@ -84,38 +85,38 @@ void rx::apply_settings()
       {
         //apply frequency
         tuned_frequency_Hz = settings_to_apply.tuned_frequency_Hz;
-        nco_frequency_Hz = nco_program_init(pio, sm, offset, tuned_frequency_Hz);
+        nco_frequency_Hz = nco_program_init(pio, sm, offset, NCO_PIN_0, tuned_frequency_Hz);
         offset_frequency_Hz = tuned_frequency_Hz - nco_frequency_Hz;
 
         if(tuned_frequency_Hz > 16.0e6)
         {
-          gpio_put(2, 0);
-          gpio_put(3, 0);
-          gpio_put(4, 0);
+          gpio_put(BAND_SEL_0, 0);
+          gpio_put(BAND_SEL_1, 0);
+          gpio_put(BAND_SEL_2, 0);
         }
         else if(tuned_frequency_Hz > 8.0e6)
         {
-          gpio_put(2, 1);
-          gpio_put(3, 0);
-          gpio_put(4, 0);
+          gpio_put(BAND_SEL_0, 1);
+          gpio_put(BAND_SEL_1, 0);
+          gpio_put(BAND_SEL_2, 0);
         }
         else if(tuned_frequency_Hz > 4.0e6)
         {
-          gpio_put(2, 0);
-          gpio_put(3, 1);
-          gpio_put(4, 0);
+          gpio_put(BAND_SEL_0, 0);
+          gpio_put(BAND_SEL_1, 1);
+          gpio_put(BAND_SEL_2, 0);
         }
         else if(tuned_frequency_Hz > 2.0e6)
         {
-          gpio_put(2, 1);
-          gpio_put(3, 1);
-          gpio_put(4, 0);
+          gpio_put(BAND_SEL_0, 1);
+          gpio_put(BAND_SEL_1, 1);
+          gpio_put(BAND_SEL_2, 0);
         }
         else
         {
-          gpio_put(2, 0);
-          gpio_put(3, 0);
-          gpio_put(4, 1);
+          gpio_put(BAND_SEL_0, 0);
+          gpio_put(BAND_SEL_1, 0);
+          gpio_put(BAND_SEL_2, 1);
         }
 
 
@@ -170,7 +171,7 @@ rx::rx(rx_settings & settings_to_apply, rx_status & status) : settings_to_apply(
     sm = pio_claim_unused_sm(pio, true);
 
     //configure SMPS into power save mode
-    const uint PSU_PIN = 23;
+    
     gpio_init(PSU_PIN);
     gpio_set_function(PSU_PIN, GPIO_FUNC_SIO);
     gpio_set_dir(PSU_PIN, GPIO_OUT);
@@ -178,22 +179,22 @@ rx::rx(rx_settings & settings_to_apply, rx_status & status) : settings_to_apply(
     
     //ADC Configuration
     adc_init();
-    adc_gpio_init(26);//I channel (0) - configure pin for ADC use
-    adc_gpio_init(27);//Q channel (1) - configure pin for ADC use
-    adc_gpio_init(29);//Battery - configure pin for ADC use
+    adc_gpio_init(ADC_I);   //I channel (0) - configure pin for ADC use
+    adc_gpio_init(ADC_Q);   //Q channel (1) - configure pin for ADC use
+    adc_gpio_init(ADC_BAT); //Battery - configure pin for ADC use
     adc_set_temp_sensor_enabled(true);
     adc_set_clkdiv(0); //flat out
 
     //band select
-    gpio_init(2);//band 0
-    gpio_init(3);//band 1
-    gpio_init(4);//band 2
-    gpio_set_function(2, GPIO_FUNC_SIO);
-    gpio_set_function(3, GPIO_FUNC_SIO);
-    gpio_set_function(4, GPIO_FUNC_SIO);
-    gpio_set_dir(2, GPIO_OUT);
-    gpio_set_dir(3, GPIO_OUT);
-    gpio_set_dir(4, GPIO_OUT);
+    gpio_init(BAND_SEL_0);//band 0
+    gpio_init(BAND_SEL_1);//band 1
+    gpio_init(BAND_SEL_2);//band 2
+    gpio_set_function(BAND_SEL_0, GPIO_FUNC_SIO);
+    gpio_set_function(BAND_SEL_1, GPIO_FUNC_SIO);
+    gpio_set_function(BAND_SEL_2, GPIO_FUNC_SIO);
+    gpio_set_dir(BAND_SEL_0, GPIO_OUT);
+    gpio_set_dir(BAND_SEL_1, GPIO_OUT);
+    gpio_set_dir(BAND_SEL_2, GPIO_OUT);
     
     // Configure DMA for ADC transfers
     adc_dma_ping = dma_claim_unused_channel(true);
@@ -218,7 +219,6 @@ rx::rx(rx_settings & settings_to_apply, rx_status & status) : settings_to_apply(
     sem_init(&settings_semaphore, 1, 1);
 
     //audio output
-    const uint AUDIO_PIN = 16;
     gpio_set_function(AUDIO_PIN, GPIO_FUNC_PWM);
     gpio_set_drive_strength(AUDIO_PIN, GPIO_DRIVE_STRENGTH_12MA);
     audio_pwm_slice_num = pwm_gpio_to_slice_num(AUDIO_PIN);
