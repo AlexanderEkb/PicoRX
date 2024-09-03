@@ -2,7 +2,7 @@
 #include "pico/multicore.h"
 #include "ui.h"
 #include <hardware/flash.h>
-#include "periph_assignment.h"
+#include "../periph_assignment.h"
 
 
 ////////////////////////////////////////////////////////////////////////////////

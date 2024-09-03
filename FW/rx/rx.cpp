@@ -4,7 +4,7 @@
 #include <string.h>
 
 #include "rx.h"
-#include "periph_assignment.h"
+#include "../periph_assignment.h"
 
 
 //buffers and dma for ADC

@@ -8,7 +8,7 @@
 #include "quadrature_encoder.pio.h"
 #include "ssd1306.h"
 #include "font.h"
-#include "rx.h"
+#include "../rx/rx.h"
 #include "memory.h"
 #include "autosave_memory.h"
 

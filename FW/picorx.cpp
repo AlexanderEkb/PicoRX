@@ -1,8 +1,8 @@
 #include "pico/stdlib.h"
 #include <stdio.h>
 #include "pico/multicore.h"
-#include "rx.h"
-#include "ui.h"
+#include "rx/rx.h"
+#include "ui/ui.h"
 
 #define UI_REFRESH_HZ (10UL)
 #define UI_REFRESH_US (1000000UL / UI_REFRESH_HZ)
