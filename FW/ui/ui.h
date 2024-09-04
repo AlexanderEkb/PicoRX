@@ -5,12 +5,17 @@
 
 #include "pico/bootrom.h"
 #include "hardware/i2c.h"
+#include "hardware/spi.h"
 #include "quadrature_encoder.pio.h"
+
 #include "ssd1306.h"
+#include "gc9a01a.h"
+
 #include "font.h"
 #include "../rx/rx.h"
 #include "memory.h"
 #include "autosave_memory.h"
+#include "../periph_assignment.h"
 
 // settings that get stored in eeprom
 #define settings_to_store 6
@@ -43,6 +48,7 @@ class ui
 {
 
   private:
+  GC9A01A display = GC9A01A(pSPIInstance, PIN_DISPLAY_SCK, PIN_DISPLAY_DO, PIN_DISPLAY_DC, PIN_DISPLAY_CS);
 
   uint32_t settings[16];
   const uint32_t step_sizes[10] = {10, 50, 100, 1000, 5000, 10000, 12500, 25000, 50000, 100000};

@@ -64,6 +64,7 @@ if(PICO_BOARD STREQUAL "pico")
       rx/half_band_filter.cpp
       rx/half_band_filter2.cpp
       ui/ssd1306.c
+      ui/gc9a01a.cpp
       ui/ui.cpp
   )
   pico_generate_pio_header(picorx ${CMAKE_CURRENT_LIST_DIR}/rx/nco.pio)
@@ -72,7 +73,7 @@ if(PICO_BOARD STREQUAL "pico")
   # enable usb output, disable uart output
   pico_enable_stdio_usb(picorx 1)
   pico_enable_stdio_uart(picorx 0)
-  target_link_libraries(picorx pico_stdlib pico_multicore hardware_clocks hardware_flash hardware_pio hardware_adc hardware_pwm hardware_dma hardware_i2c)
+  target_link_libraries(picorx pico_stdlib pico_multicore hardware_clocks hardware_flash hardware_pio hardware_adc hardware_pwm hardware_dma hardware_i2c hardware_spi)
 
 elseif(PICO_BOARD STREQUAL "pico2")
 
@@ -89,6 +90,7 @@ elseif(PICO_BOARD STREQUAL "pico2")
         rx/half_band_filter.cpp
         rx/half_band_filter2.cpp
         ui/ssd1306.c
+        ui/gc9a01a.cpp
         ui/ui.cpp
   )
     pico_generate_pio_header(pico2rx-riscv ${CMAKE_CURRENT_LIST_DIR}/rx/nco.pio)
@@ -97,7 +99,7 @@ elseif(PICO_BOARD STREQUAL "pico2")
     # enable usb output, disable uart output
     pico_enable_stdio_usb(pico2rx-riscv 1)
     pico_enable_stdio_uart(pico2rx-riscv 0)
-    target_link_libraries(pico2rx-riscv pico_stdlib pico_multicore hardware_clocks hardware_flash hardware_pio hardware_adc hardware_pwm hardware_dma hardware_i2c)
+    target_link_libraries(pico2rx-riscv pico_stdlib pico_multicore hardware_clocks hardware_flash hardware_pio hardware_adc hardware_pwm hardware_dma hardware_i2c hardware_spi)
 
   else()
 
@@ -111,6 +113,7 @@ elseif(PICO_BOARD STREQUAL "pico2")
         rx/half_band_filter.cpp
         rx/half_band_filter2.cpp
         ui/ssd1306.c
+        ui/gc9a01a.cpp
         ui/ui.cpp
   )
     pico_generate_pio_header(pico2rx ${CMAKE_CURRENT_LIST_DIR}/rx/nco.pio)
@@ -119,7 +122,7 @@ elseif(PICO_BOARD STREQUAL "pico2")
     # enable usb output, disable uart output
     pico_enable_stdio_usb(pico2rx 1)
     pico_enable_stdio_uart(pico2rx 0)
-    target_link_libraries(pico2rx pico_stdlib pico_multicore hardware_clocks hardware_flash hardware_pio hardware_adc hardware_pwm hardware_dma hardware_i2c)
+    target_link_libraries(pico2rx pico_stdlib pico_multicore hardware_clocks hardware_flash hardware_pio hardware_adc hardware_pwm hardware_dma hardware_i2c hardware_spi)
 
   endif()
 
