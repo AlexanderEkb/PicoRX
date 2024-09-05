@@ -8,7 +8,7 @@ class GC9A01A
   public:
     GC9A01A(spi_inst_t * spi, uint32_t pin_sck, uint32_t pin_do, uint32_t pin_dc, uint32_t pin_cs);
   private:
-    static const uint32_t BAUDRATE = 40000000;
+    static const uint32_t BAUDRATE = 5000000;
     spi_inst_t * spi;
     uint32_t pin_dc;
     uint32_t pin_cs;

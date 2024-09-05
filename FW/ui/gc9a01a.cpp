@@ -16,9 +16,18 @@ GC9A01A::GC9A01A(spi_inst_t * spi, uint32_t pin_sck, uint32_t pin_do, uint32_t p
   spi_init(spi, BAUDRATE);
   gpio_set_function(pin_do, GPIO_FUNC_SPI);
   gpio_set_function(pin_sck, GPIO_FUNC_SPI);
+  gpio_set_function(pin_dc, GPIO_FUNC_SIO);
+  gpio_set_function(pin_cs, GPIO_FUNC_SIO);
+
+  gpio_set_dir(pin_dc, true);
+  gpio_set_dir(pin_cs, true);
+
+  gpio_put(pin_dc, 1);
+  gpio_put(pin_cs, 1);
 
   for(uint32_t i=0; i<240*240*2; i++)
     vBuf[i] = 0;
+  writeInitSequence();
 }
 
 void GC9A01A::writecommand(uint8_t cmd)

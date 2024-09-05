@@ -1224,7 +1224,8 @@ void ui::do_ui(void)
 
 ui::ui(rx_settings & settings_to_apply, rx_status & status, rx &receiver) : settings_to_apply(settings_to_apply), status(status), receiver(receiver)
 {
-  setup_display();
+  // setup_display();
+  
   setup_encoder();
   setup_buttons();
 
