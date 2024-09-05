@@ -75,21 +75,11 @@ bool ui::check_button(unsigned button){
 ////////////////////////////////////////////////////////////////////////////////
 // Display
 ////////////////////////////////////////////////////////////////////////////////
-void ui::setup_display() {
-  i2c_init(pI2CInstance, 400000);
-  gpio_set_function(PIN_DISPLAY_SDA, GPIO_FUNC_I2C);
-  gpio_set_function(PIN_DISPLAY_SCL, GPIO_FUNC_I2C);
-  gpio_pull_up(PIN_DISPLAY_SDA);
-  gpio_pull_up(PIN_DISPLAY_SCL);
-  disp.external_vcc=false;
-  ssd1306_init(&disp, 128, 64, 0x3C, pI2CInstance); 
-}
-
 void ui::display_clear()
 {
   cursor_x = 0;
   cursor_y = 0;
-  ssd1306_clear(&disp);
+  display.fill(0x0000);
 }
 
 void ui::display_line1()
@@ -112,13 +102,13 @@ void ui::display_linen(uint8_t line)
 
 void ui::display_write(char x)
 {
-  ssd1306_draw_char(&disp, cursor_x*6, cursor_y*8, 1, x);
+  display.drawChar(cursor_x*6, cursor_y*8, 1, x);
   cursor_x++;
 }
 
 void ui::display_print(const char str[])
 {
-  ssd1306_draw_string(&disp, cursor_x*6, cursor_y*8, 1, str);
+  display.drawString(cursor_x*6, cursor_y*8, 1, str);
   cursor_x+=strlen(str);
 }
 
@@ -126,13 +116,13 @@ void ui::display_print_num(const char format[], int16_t num)
 {
   char buff[16];
   snprintf(buff, 16, format, num);
-  ssd1306_draw_string(&disp, cursor_x*6, cursor_y*8, 1, buff);
+  display.drawString(cursor_x*6, cursor_y*8, 1, buff);
   cursor_x+=strlen(buff);
 }
 
 void ui::display_show()
 {
-  ssd1306_show(&disp);
+  // ssd1306_show(&disp);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -152,7 +142,7 @@ void ui::update_display(rx_status & status, rx & receiver)
   receiver.release();
 
   char buff [21];
-  ssd1306_clear(&disp);
+  // display_clear();
 
   //frequency
   uint32_t remainder, MHz, kHz, Hz;
@@ -162,20 +152,20 @@ void ui::update_display(rx_status & status, rx & receiver)
   remainder = remainder%1000u; 
   Hz = remainder;
   snprintf(buff, 21, "%2lu.%03lu", MHz, kHz);
-  ssd1306_draw_string(&disp, 0, 0, 2, buff);
+  display.drawString(0, 0, 2, buff);
   snprintf(buff, 21, ".%03lu", Hz);
-  ssd1306_draw_string(&disp, 72, 0, 1, buff);
+  display.drawString(72, 0, 1, buff);
 
   //mode
   static const char modes[][4]  = {" AM", "LSB", "USB", " FM", " CW"};
-  ssd1306_draw_string(&disp, 102, 0, 1, modes[settings[idx_mode]]);
+  display.drawString(102, 0, 1, modes[settings[idx_mode]]);
 
   //step
   static const char steps[][8]  = {
     "   10Hz", "   50Hz", "  100Hz", "   1kHz",
     "   5kHz", "  10kHz", "12.5kHz", "  25kHz", 
     "  50kHz", " 100kHz"};
-  ssd1306_draw_string(&disp, 78, 8, 1, steps[settings[idx_step]]);
+  display.drawString(78, 8, 1, steps[settings[idx_step]]);
 
   //signal strength/cpu
   static const char smeter[][12]  = {
@@ -188,22 +178,22 @@ void ui::update_display(rx_status & status, rx & receiver)
   if(power_s < 0) power_s = 0;
   if(power_s > 12) power_s = 12;
   snprintf(buff, 21, "%s  % 4.0fdBm", smeter[power_s], power_dBm);
-  ssd1306_draw_string(&disp, 0, 24, 1, buff);
+  display.drawString(0, 24, 1, buff);
   snprintf(buff, 21, "       %2.1fV %2.0f%cC %2.0f%%", battery_voltage, temp, '\x7f', (100.0f*busy_time)/block_time);
-  ssd1306_draw_string(&disp, 0, 16, 1, buff);
+  display.drawString(0, 16, 1, buff);
 
   //Display spectrum capture
   static float spectrum[128];
   int16_t offset;
   receiver.get_spectrum(spectrum, offset);
-  ssd1306_draw_line(&disp, 0, 34, 127, 34);
+  display.drawLine(0, 34, 127, 34);
 
-  ssd1306_draw_line(&disp, 0,   32, 0,   36);
-  ssd1306_draw_line(&disp, 64,  32, 64,  36);
-  ssd1306_draw_line(&disp, 127, 32, 127, 36);
+  display.drawLine(0,   32, 0,   36);
+  display.drawLine(64,  32, 64,  36);
+  display.drawLine(127, 32, 127, 36);
 
-  ssd1306_draw_line(&disp, 32, 33, 32, 35);
-  ssd1306_draw_line(&disp, 96, 33, 96, 35);
+  display.drawLine(32, 33, 32, 35);
+  display.drawLine(96, 33, 96, 35);
 
   float min=2;
   float max=6;
@@ -215,10 +205,10 @@ void ui::update_display(rx_status & status, rx & receiver)
       int16_t y = scale*(log10f(spectrum[x])-min);
       if(y < 0) y=0;
       if(y > 31) y=31;
-      ssd1306_draw_line(&disp, x, 63-y, x, 63);
+      display.drawLine(x, 63-y, x, 63);
   }
 
-  ssd1306_show(&disp);
+  // ssd1306_show(&disp);
 
 }
 
@@ -478,9 +468,7 @@ void ui::autorestore()
   }
 
   apply_settings(false);
-  ssd1306_flip(&disp, settings_to_apply.flip_oled );
-  ssd1306_type(&disp, settings_to_apply.oled_type );
-
+  display.flip(settings_to_apply.flip_oled );
 }
 
 //Upload memories via USB interface
@@ -1159,12 +1147,11 @@ void ui::do_ui(void)
 
         case 13: 
           rx_settings_changed = bit_entry("Flip Oled", "Off#On#", flag_flip_oled, &settings[idx_hw_setup]);
-          ssd1306_flip(&disp, settings[idx_hw_setup] >> flag_flip_oled);
+          display.flip(settings[idx_hw_setup] >> flag_flip_oled);
           break;
 
         case 14: 
           rx_settings_changed = bit_entry("Oled Type", "SSD1306#SH1106#", flag_oled_type, &settings[idx_hw_setup]);
-          ssd1306_type(&disp, settings[idx_hw_setup] >> flag_oled_type);
           break;
 
         case 15: 
@@ -1224,8 +1211,6 @@ void ui::do_ui(void)
 
 ui::ui(rx_settings & settings_to_apply, rx_status & status, rx &receiver) : settings_to_apply(settings_to_apply), status(status), receiver(receiver)
 {
-  // setup_display();
-  
   setup_encoder();
   setup_buttons();
 

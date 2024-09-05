@@ -63,7 +63,7 @@ if(PICO_BOARD STREQUAL "pico")
       rx/rx_dsp.cpp
       rx/half_band_filter.cpp
       rx/half_band_filter2.cpp
-      ui/ssd1306.c
+      # ui/TFT_eSPI.cpp
       ui/gc9a01a.cpp
       ui/ui.cpp
   )
@@ -89,7 +89,7 @@ elseif(PICO_BOARD STREQUAL "pico2")
         rx/rx_dsp.cpp
         rx/half_band_filter.cpp
         rx/half_band_filter2.cpp
-        ui/ssd1306.c
+        # ui/TFT_eSPI.cpp
         ui/gc9a01a.cpp
         ui/ui.cpp
   )
@@ -112,7 +112,7 @@ elseif(PICO_BOARD STREQUAL "pico2")
         rx/rx_dsp.cpp
         rx/half_band_filter.cpp
         rx/half_band_filter2.cpp
-        ui/ssd1306.c
+        # ui/TFT_eSPI.cpp
         ui/gc9a01a.cpp
         ui/ui.cpp
   )

@@ -8,7 +8,6 @@
 #include "hardware/spi.h"
 #include "quadrature_encoder.pio.h"
 
-#include "ssd1306.h"
 #include "gc9a01a.h"
 
 #include "font.h"
@@ -70,7 +69,6 @@ class ui
   uint8_t timeout;
 
   // Display
-  void setup_display();
   void display_clear();
   void display_line1();
   void display_line2();
@@ -80,7 +78,6 @@ class ui
   void display_print_num(const char format[], int16_t num);
   void display_show();
 
-  ssd1306_t disp;
   uint8_t cursor_x = 0;
   uint8_t cursor_y = 0;
 
