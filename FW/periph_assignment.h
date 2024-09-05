@@ -16,9 +16,9 @@ static const uint8_t PIN_DISPLAY_CS         = 5;
 static const uint8_t PIN_DISPLAY_SCK        = 6;
 static const uint8_t PIN_DISPLAY_DO         = 7;
 
-static const uint8_t PIN_ENCODER_PUSH       = 7;
-static const uint8_t PIN_MENU               = 8;
-static const uint8_t PIN_BACK               = 9;
+static const uint8_t PIN_ENCODER_PUSH       = 8;
+static const uint8_t PIN_MENU               = 9;
+static const uint8_t PIN_BACK               = 10;
 
 static const uint8_t PIN_DISPLAY_SDA        = 6;
 static const uint8_t PIN_DISPLAY_SCL        = 7;
@@ -32,7 +32,7 @@ static const uint8_t PIN_DISPLAY_SCL        = 7;
 // RX
 static const uint    NCO_PIN_0              = 0;
 static const uint    NCO_PIN_1              = NCO_PIN_0 + 1;    // Strict requirement
-static const uint    AUDIO_PIN              = 10;
+static const uint    AUDIO_PIN              = 11;
 static const uint    BAND_SEL_0             = 16;               // Not routed
 static const uint    BAND_SEL_1             = 17;               // Not routed
 static const uint    BAND_SEL_2             = 18;               // Not routed
