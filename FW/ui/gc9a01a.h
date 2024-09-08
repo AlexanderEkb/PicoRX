@@ -3,19 +3,28 @@
 
 #include "hardware/spi.h"
 #include "hardware/dma.h"
+#include "surface.h"
 
-class GC9A01A
+class GC9A01A : public Surface_t
 {
   public:
+    static const uint32_t DISPLAY_WIDTH = 240;
+    static const uint32_t DISPLAY_HEIGHT = 240;
     GC9A01A(spi_inst_t * spi, uint32_t pin_sck, uint32_t pin_do, uint32_t pin_dc, uint32_t pin_cs);
+
+    virtual uint32_t getWidth() {return DISPLAY_WIDTH;};
+    virtual uint32_t getHeight() {return DISPLAY_HEIGHT;};
+    virtual Pixel_t * getPixels() {return nullptr;};
+    virtual void blit(Surface_t * src, Rect_t from, Point_t to);
+
     void setViewport(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2);
     void fill(uint16_t color);
     void flip(bool flip);
-    void drawLine(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2);
+    void drawLine(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2, uint16_t color);
     void drawChar(uint32_t x, uint32_t y, uint32_t scale, const char c);
     void drawString(uint32_t x, uint32_t y, uint32_t scale, const char * s);
   private:
-    static const uint32_t BAUDRATE = 40000000;
+    static const uint32_t BAUDRATE = 60000000;
     spi_inst_t * spi;
     uint32_t pin_dc;
     uint32_t pin_cs;
@@ -29,10 +38,7 @@ class GC9A01A
     void writeData(uint8_t data);
     void startTransfer();
     void dmaWait();
-    void pushPixels(uint16_t* image, uint32_t len);
-    void pushPixelsDMA(uint16_t* image, uint32_t len);
-    void pushImageDMA(int32_t x, int32_t y, int32_t w, int32_t h, uint16_t* image, uint16_t* buffer);
-    void writeData16(uint32_t data);
+    void pushPixelsDMA(Pixel_t * image, uint32_t len);
     void writeData32(uint32_t data);
     void writeInitSequence();
 };

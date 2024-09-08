@@ -1,4 +1,5 @@
 #include <string.h>
+#include "surface.h"
 #include "hardware/spi.h"
 #include "hardware/gpio.h"
 #include "gc9a01a.h"
@@ -38,12 +39,43 @@ GC9A01A::GC9A01A(spi_inst_t * spi, uint32_t pin_sck, uint32_t pin_do, uint32_t p
   for(uint32_t i=0; i<240*240*2; i++)
     vBuf[i] = 0;
   writeInitSequence();
+  uint16_t clr = 0x0001;
+  for(uint32_t i=0; i<16; i++)
+  {
+    uint32_t x1 = (240 / 16) * i;
+    uint32_t x2 = x1 + (240 / 16) - 1;
+    drawLine(x1, 0, x2, 239, clr);
+    clr <<= 1;
+  }
+}
+
+void GC9A01A::blit(Surface_t * src, Rect_t from, Point_t to)
+{
+  uint32_t x2 = to.x  + from.w - 1;
+  uint32_t y2 = to.y  + from.h - 1;
+  setViewport(to.x, to.y, x2, y2);
+  for (uint32_t scanline = from.y; scanline < (from.y + from.h - 1); scanline++)
+  {
+    Pixel_t * org = src->getPixels() + (scanline * src->getWidth()) + from.x;
+    pushPixelsDMA(org, from.w);
+  }
+}
+
+void GC9A01A::drawLine(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2, uint16_t color = 0xFFFF)
+{
+  setViewport(x1, y1, x2, y2);
+  const uint32_t square = (x2 - x1 + 1) * (y2 - y1 + 1);
+  Pixel_t buffer[square];
+
+  for(uint32_t j=0; j<square; j++)
+    buffer[j].raw = color;
+
+  pushPixelsDMA(&buffer[0], square);
 }
 
 void GC9A01A::fill(uint16_t color)
 {
   setViewport(0, 0, 239, 239);
-  writeCommand(0x2C);
   startTransfer();
   for (uint32_t i=0; i<240*240/2; i++)
   {
@@ -56,11 +88,6 @@ void GC9A01A::flip(bool flip)
 
 }
 
-void GC9A01A::drawLine(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2)
-{
-
-}
-
 void GC9A01A::drawChar(uint32_t x, uint32_t y, uint32_t scale, const char c)
 {
   const uint32_t chrHeiht = font_8x5[0];
@@ -69,7 +96,7 @@ void GC9A01A::drawChar(uint32_t x, uint32_t y, uint32_t scale, const char c)
   const uint32_t chrOffset = font_8x5[3];
   const uint32_t bufWidth = chrWidth + chrSpacing;
   const uint32_t bufSize = chrHeiht * bufWidth;
-  uint16_t buffer[bufSize];
+  Pixel_t buffer[bufSize];
   memset(buffer, 0, bufSize * sizeof(uint16_t));
 
   for (uint32_t col=0; col<chrWidth; col++)
@@ -77,20 +104,18 @@ void GC9A01A::drawChar(uint32_t x, uint32_t y, uint32_t scale, const char c)
     uint8_t byte = font_8x5[(c - chrOffset) * chrWidth + col + 5];
     for (uint32_t row=0; row<chrHeiht; row++)
     {
-      buffer[row * bufWidth + col] = (byte & 0x01) ? 0xFFFF : 0x0000;
+      buffer[row * bufWidth + col].raw = (byte & 0x01) ? 0xFFFF : 0x0000;
       byte >>= 1;
     }
   }
 
   setViewport(
-    x + 56, 
-    y + 88,
-    x + bufWidth + 55,
-    y + chrHeiht + 87
+    x,
+    y,
+    x + bufWidth - 1,
+    y + chrHeiht - 1
   );
-  writeCommand(0x2C);
-  startTransfer();
-  pushPixels(buffer, chrHeiht * bufWidth);
+  pushPixelsDMA(buffer, chrHeiht * bufWidth);
 }
 
 void GC9A01A::drawString(uint32_t x, uint32_t y, uint32_t scale, const char * s)
@@ -121,18 +146,23 @@ void GC9A01A::setViewport(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2)
 
 void GC9A01A::writeCommand(uint8_t cmd)
 {
+  dmaWait();
+  spi_set_format(spi, 8, SPI_CPOL_1, SPI_CPHA_1, SPI_MSB_FIRST);
   gpio_put(pin_dc, 0);
   spi_write_blocking(spi, &cmd, 1);
 }
 
 void GC9A01A::writeData(uint8_t data)
 {
+  dmaWait();
+  spi_set_format(spi, 8, SPI_CPOL_1, SPI_CPHA_1, SPI_MSB_FIRST);
   gpio_put(pin_dc, 1);
   spi_write_blocking(spi, &data, 1);
 }
 
 void GC9A01A::startTransfer()
 {
+  writeCommand(0x2C);
   gpio_put(pin_dc, 1);
 }
 
@@ -140,75 +170,28 @@ void GC9A01A::dmaWait()
 {
   while (dma_channel_is_busy(dma_tx_channel));
   // For SPI must also wait for FIFO to flush and reset format
-  while (spi_get_hw(spi)->sr & SPI_SSPSR_BSY_BITS) {};
+  while (spi_is_busy(spi));
+  // while (spi_get_hw(spi)->sr & SPI_SSPSR_BSY_BITS) {};
 }
 
-void GC9A01A::pushPixelsDMA(uint16_t* image, uint32_t len)
+void GC9A01A::pushPixelsDMA(Pixel_t * image, uint32_t len)
 {
   if (len == 0) return;
   dmaWait();
+  startTransfer();
+
+  spi_set_format(spi, 16, SPI_CPOL_1, SPI_CPHA_1, SPI_MSB_FIRST);
   channel_config_set_bswap(&dma_tx_config, false);
-  dma_channel_configure(dma_tx_channel, &dma_tx_config, &spi_get_hw(spi)->dr, (uint16_t*)image, len, true);
-}
+  dma_channel_configure(dma_tx_channel, &dma_tx_config, &spi_get_hw(spi)->dr, image, len, true);
 
-void GC9A01A::pushPixels(uint16_t* image, uint32_t len)
-{
-  if (len == 0) return;
-  spi_write_blocking(spi, (uint8_t *)image, len*2);
-}
+  // CURE: !!!
+  sleep_ms(2);
 
-void GC9A01A::pushImageDMA(int32_t x, int32_t y, int32_t w, int32_t h, uint16_t* image, uint16_t* buffer)
-{
-  // if ((x >= _vpW) || (y >= _vpH)) return;
-
-  // int32_t dx = 0;
-  // int32_t dy = 0;
-  // int32_t dw = w;
-  // int32_t dh = h;
-
-  // if (x < _vpX) { dx = _vpX - x; dw -= dx; x = _vpX; }
-  // if (y < _vpY) { dy = _vpY - y; dh -= dy; y = _vpY; }
-
-  // if ((x + dw) > _vpW ) dw = _vpW - x;
-  // if ((y + dh) > _vpH ) dh = _vpH - y;
-
-  // if (dw < 1 || dh < 1) return;
-
-  // uint32_t len = dw*dh;
-
-  // if (buffer == nullptr) {
-  //   buffer = image;
-  //   dmaWait();
-  // }
-
-  // // If image is clipped, copy pixels into a contiguous block
-  // if ( (dw != w) || (dh != h) ) {
-  //   for (int32_t yb = 0; yb < dh; yb++) {
-  //     memmove((uint8_t*) (buffer + yb * dw), (uint8_t*) (image + dx + w * (yb + dy)), dw << 1);
-  //   }
-  // }
-  // // else, if a buffer pointer has been provided copy whole image to the buffer
-  // else if (buffer != image) {
-  //   memcpy(buffer, image, len*2);
-  // }
-
-  // dmaWait(); // In case we did not wait earlier
-
-  // setAddrWindow(x, y, dw, dh);
-
-  // channel_config_set_bswap(&dma_tx_config, false);
-
-  // dma_channel_configure(dma_tx_channel, &dma_tx_config, &spi_get_hw(SPI_X)->dr, (uint16_t*)buffer, len, true);
-}
-
-void GC9A01A::writeData16(uint32_t data)
-{
-  spi_write_blocking(spi, reinterpret_cast<uint8_t *>(&data), 2);
 }
 
 void GC9A01A::writeData32(uint32_t data)
 {
-  spi_write_blocking(spi, reinterpret_cast<uint8_t *>(&data), 4);
+  // spi_write_blocking(spi, reinterpret_cast<uint8_t *>(&data), 4);
 }
 
 void GC9A01A::writeInitSequence()
