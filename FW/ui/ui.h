@@ -10,7 +10,7 @@
 
 #include "gc9a01a.h"
 
-#include "font.h"
+#include "font_5x7.h"
 #include "../rx/rx.h"
 #include "memory.h"
 #include "autosave_memory.h"

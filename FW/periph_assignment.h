@@ -41,5 +41,25 @@ static const uint    ADC_I                  = 26;
 static const uint    ADC_Q                  = 27;
 static const uint    ADC_BAT                = 29;
 
+/*
+ Control panel pinout:
+ =====================
+
+ 1  x
+ 2  x
+ 3  x
+ 4  IO10    Back
+ 5  IO9     Menu
+ 6  IO8     Recall
+ 7  IO7     Display DO
+ 8  IO6     Display SCK
+ 9  IO5     Display CS
+ 10 IO4     Display DC
+ 11 IO3     Encoder B
+ 12 IO2     Encoder A
+ 13 GND
+ 14 3V3
+
+*/
 
 #endif /* _PERIPH_ASSIGNMENT_H_ */

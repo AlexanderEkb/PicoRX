@@ -5,31 +5,8 @@
 #include <assert.h>
 #include <string.h>
 #include <cstdlib>
-
-typedef union Pixel_t
-{
-  uint16_t raw;
-  struct 
-  {
-    uint16_t r:5;
-    uint16_t g:6;
-    uint16_t b:5;
-  };
-} Pixel_t;
-
-typedef struct Point_t
-{
-  uint32_t x;
-  uint32_t y;
-} Point_t;
-
-typedef struct Rect_t
-{
-  uint32_t x;
-  uint32_t y;
-  uint32_t w;
-  uint32_t h;
-} Rect_t;
+#include "ui_types.h"
+#include "fonts/font.h"
 
 class Surface_t
 {
@@ -39,13 +16,28 @@ class Surface_t
     virtual Pixel_t * getPixels() = 0;
     virtual void blit(Surface_t * src, Rect_t from, Point_t to) = 0;
   protected:
-    bool getIntersection(Rect_t & from, Point_t to)
+    typedef enum CheckResult_t
     {
-      if (to.x >= getWidth()) return false;
-      if (to.y >= getHeight()) return false;
-      if ((to.x + from.w) >= getWidth()) from.w = getWidth() - to.x;
-      if ((to.y + from.h) >= getHeight()) from.h = getHeight() - to.y;
-      return true;
+      CHECK_RESULT_FITS,
+      CHECK_RESULT_SHRINKED,
+      CHECK_RESULT_NO_INTERSECTION
+    } CheckResult_t;
+    CheckResult_t getIntersection(Rect_t & from, Point_t to)
+    {
+      bool shrinked = false;
+      if (to.x >= getWidth()) return CHECK_RESULT_NO_INTERSECTION;
+      if (to.y >= getHeight()) return CHECK_RESULT_NO_INTERSECTION;
+      if ((to.x + from.w) > getWidth())
+      {
+        shrinked = true;
+        from.w = getWidth() - to.x;
+      }
+      if ((to.y + from.h) > getHeight())
+      {
+        shrinked = true;
+        from.h = getHeight() - to.y;
+      }
+      return shrinked ? CHECK_RESULT_SHRINKED : CHECK_RESULT_FITS;
     }
 };
 
@@ -72,12 +64,20 @@ class Canvas_t : public Surface_t
       Pixel_t * getPixels() {return pixels;};
       virtual void blit(Surface_t * src, Rect_t from, Point_t to)
       {
-        if (getIntersection(from, to) != true) return;
+        if (getIntersection(from, to) == CHECK_RESULT_NO_INTERSECTION) return;
         Pixel_t * target = &pixels[to.y * width + to.x];
         for (uint32_t i=0; i<from.h; i++)
         {
           Pixel_t * source = &src->getPixels()[from.y * src->getWidth() + from.x];
           memcpy(target, source, sizeof(Pixel_t) * from.w);
+        }
+      }
+      virtual void fill(Pixel_t color)
+      {
+        if(pixels != nullptr)
+        {
+          for (uint32_t i=0; i<width*height; i++)
+            pixels[i].raw = color.raw;
         }
       }
   protected:

@@ -24,7 +24,7 @@ class GC9A01A : public Surface_t
     void drawChar(uint32_t x, uint32_t y, uint32_t scale, const char c);
     void drawString(uint32_t x, uint32_t y, uint32_t scale, const char * s);
   private:
-    static const uint32_t BAUDRATE = 60000000;
+    static const uint32_t BAUDRATE = 50000000;
     spi_inst_t * spi;
     uint32_t pin_dc;
     uint32_t pin_cs;
@@ -34,6 +34,7 @@ class GC9A01A : public Surface_t
     int32_t            dma_tx_channel;
     dma_channel_config dma_tx_config;
 
+    void writeCommandEx(uint8_t command, uint32_t count, ...);
     void writeCommand(uint8_t cmd);
     void writeData(uint8_t data);
     void startTransfer();

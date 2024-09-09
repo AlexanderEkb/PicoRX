@@ -1,11 +1,12 @@
 #include <string.h>
+#include <stdarg.h>
 #include "surface.h"
 #include "hardware/spi.h"
 #include "hardware/gpio.h"
 #include "gc9a01a.h"
 #include "pico/stdlib.h"
 
-#include "font.h"
+#include "font_5x7.h"
 
 static uint8_t vBuf[240 * 240 * 2];
 
@@ -39,25 +40,42 @@ GC9A01A::GC9A01A(spi_inst_t * spi, uint32_t pin_sck, uint32_t pin_do, uint32_t p
   for(uint32_t i=0; i<240*240*2; i++)
     vBuf[i] = 0;
   writeInitSequence();
-  uint16_t clr = 0x0001;
+
+  Pixel_t clr = Pixel_t(0x0001);
+  const uint32_t _w = 240 / 16;
   for(uint32_t i=0; i<16; i++)
   {
-    uint32_t x1 = (240 / 16) * i;
-    uint32_t x2 = x1 + (240 / 16) - 1;
-    drawLine(x1, 0, x2, 239, clr);
-    clr <<= 1;
+    uint32_t x1 = (_w) * i;
+    Canvas_t * canvas = new Canvas_t(240 / 16, 240);
+    canvas->fill(clr);
+    blit(canvas, Rect_t(0, 0, _w, 240), Point_t(x1, 0));
+    dmaWait();
+    delete canvas;
+    clr.raw <<= 1;
   }
+
+  // while(true);
 }
 
 void GC9A01A::blit(Surface_t * src, Rect_t from, Point_t to)
 {
   uint32_t x2 = to.x  + from.w - 1;
-  uint32_t y2 = to.y  + from.h - 1;
-  setViewport(to.x, to.y, x2, y2);
-  for (uint32_t scanline = from.y; scanline < (from.y + from.h - 1); scanline++)
+  CheckResult_t r = getIntersection(from, to);
+  if (r == CHECK_RESULT_NO_INTERSECTION) return;
+  if (r == CHECK_RESULT_FITS)
   {
-    Pixel_t * org = src->getPixels() + (scanline * src->getWidth()) + from.x;
-    pushPixelsDMA(org, from.w);
+    uint32_t y2 = to.y  + from.h - 1;
+    setViewport(to.x, to.y, x2, y2);
+    pushPixelsDMA(src->getPixels(), from.w * from.h);
+  }
+  else
+  {
+    for (uint32_t scanline = from.y; scanline < (from.y + from.h - 1); scanline++)
+    {
+      Pixel_t * org = src->getPixels() + (scanline * src->getWidth()) + from.x;
+      setViewport(to.x, scanline, x2, scanline);
+      pushPixelsDMA(org, from.w);
+    }
   }
 }
 
@@ -95,27 +113,24 @@ void GC9A01A::drawChar(uint32_t x, uint32_t y, uint32_t scale, const char c)
   const uint32_t chrSpacing = font_8x5[2];
   const uint32_t chrOffset = font_8x5[3];
   const uint32_t bufWidth = chrWidth + chrSpacing;
-  const uint32_t bufSize = chrHeiht * bufWidth;
-  Pixel_t buffer[bufSize];
-  memset(buffer, 0, bufSize * sizeof(uint16_t));
+  
+  Canvas_t * canvas = new Canvas_t(bufWidth, chrHeiht);
+  canvas->fill(Pixel_t(0));
+  Pixel_t * pixels = canvas->getPixels();
 
   for (uint32_t col=0; col<chrWidth; col++)
   {
     uint8_t byte = font_8x5[(c - chrOffset) * chrWidth + col + 5];
     for (uint32_t row=0; row<chrHeiht; row++)
     {
-      buffer[row * bufWidth + col].raw = (byte & 0x01) ? 0xFFFF : 0x0000;
+      pixels[row * bufWidth + col].raw = (byte & 0x01) ? 0xFFFF : 0x0000;
       byte >>= 1;
     }
   }
 
-  setViewport(
-    x,
-    y,
-    x + bufWidth - 1,
-    y + chrHeiht - 1
-  );
-  pushPixelsDMA(buffer, chrHeiht * bufWidth);
+  blit(canvas, Rect_t(0, 0, bufWidth, chrHeiht), Point_t(x, y));
+  dmaWait();
+  delete canvas;
 }
 
 void GC9A01A::drawString(uint32_t x, uint32_t y, uint32_t scale, const char * s)
@@ -131,23 +146,50 @@ void GC9A01A::drawString(uint32_t x, uint32_t y, uint32_t scale, const char * s)
 
 void GC9A01A::setViewport(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2)
 {
-  writeCommand(0x2A);
-  writeData(static_cast<uint8_t>(x1 >> 8) & 0xFF);
-  writeData(static_cast<uint8_t>(x1 >> 0) & 0xFF);
-  writeData(static_cast<uint8_t>(x2 >> 8) & 0xFF);
-  writeData(static_cast<uint8_t>(x2 >> 0) & 0xFF);
+  writeCommandEx(0x2A, 4, 
+    static_cast<uint8_t>((x1 >> 8) & 0xFF),
+    static_cast<uint8_t>((x1 >> 0) & 0xFF),
+    static_cast<uint8_t>((x2 >> 8) & 0xFF),
+    static_cast<uint8_t>((x2 >> 0) & 0xFF)
+  );
+  writeCommandEx(0x2B, 4,
+    static_cast<uint8_t>((y1 >> 8) & 0xFF),
+    static_cast<uint8_t>((y1 >> 0) & 0xFF),
+    static_cast<uint8_t>((y2 >> 8) & 0xFF),
+    static_cast<uint8_t>((y2 >> 0) & 0xFF)
+  );
+}
 
-  writeCommand(0x2B);
-  writeData(static_cast<uint8_t>(y1 >> 8) & 0xFF);
-  writeData(static_cast<uint8_t>(y1 >> 0) & 0xFF);
-  writeData(static_cast<uint8_t>(y2 >> 8) & 0xFF);
-  writeData(static_cast<uint8_t>(y2 >> 0) & 0xFF);
+void GC9A01A::writeCommandEx(uint8_t command, uint32_t count, ...)
+{
+  dmaWait();
+  spi_set_format(spi, 8, SPI_CPOL_1, SPI_CPHA_1, SPI_MSB_FIRST);
+  channel_config_set_transfer_data_size(&dma_tx_config, DMA_SIZE_8);
+  gpio_put(pin_dc, 0);
+  dma_channel_configure(dma_tx_channel, &dma_tx_config, &spi_get_hw(spi)->dr, &command, 1, true);
+
+  if (count > 0)
+  {
+    va_list args;
+    va_start(args, count);
+    uint8_t parameters[count];
+    for(uint32_t i=0; i<count; i++)
+      parameters[i] = static_cast<uint8_t>(va_arg(args, int));
+    va_end(args);
+
+    dmaWait();
+    gpio_put(pin_dc, 1);
+    dma_channel_configure(dma_tx_channel, &dma_tx_config, &spi_get_hw(spi)->dr, parameters, count, true);
+  }
+
+  dmaWait();
 }
 
 void GC9A01A::writeCommand(uint8_t cmd)
 {
   dmaWait();
   spi_set_format(spi, 8, SPI_CPOL_1, SPI_CPHA_1, SPI_MSB_FIRST);
+  channel_config_set_transfer_data_size(&dma_tx_config, DMA_SIZE_8);
   gpio_put(pin_dc, 0);
   spi_write_blocking(spi, &cmd, 1);
 }
@@ -156,13 +198,14 @@ void GC9A01A::writeData(uint8_t data)
 {
   dmaWait();
   spi_set_format(spi, 8, SPI_CPOL_1, SPI_CPHA_1, SPI_MSB_FIRST);
+  channel_config_set_transfer_data_size(&dma_tx_config, DMA_SIZE_8);
   gpio_put(pin_dc, 1);
   spi_write_blocking(spi, &data, 1);
 }
 
 void GC9A01A::startTransfer()
 {
-  writeCommand(0x2C);
+  writeCommandEx(0x2C, 0);
   gpio_put(pin_dc, 1);
 }
 
@@ -181,12 +224,11 @@ void GC9A01A::pushPixelsDMA(Pixel_t * image, uint32_t len)
   startTransfer();
 
   spi_set_format(spi, 16, SPI_CPOL_1, SPI_CPHA_1, SPI_MSB_FIRST);
+  channel_config_set_transfer_data_size(&dma_tx_config, DMA_SIZE_16);
   channel_config_set_bswap(&dma_tx_config, false);
   dma_channel_configure(dma_tx_channel, &dma_tx_config, &spi_get_hw(spi)->dr, image, len, true);
-
   // CURE: !!!
-  sleep_ms(2);
-
+  // sleep_ms(2);
 }
 
 void GC9A01A::writeData32(uint32_t data)

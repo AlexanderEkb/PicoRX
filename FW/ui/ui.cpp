@@ -186,14 +186,13 @@ void ui::update_display(rx_status & status, rx & receiver)
   static float spectrum[128];
   int16_t offset;
   receiver.get_spectrum(spectrum, offset);
-  display.drawLine(56, 34 + 88, 127 + 56, 34 + 88, 0xFFFF);
+  // display.drawLine(56,  122, 183, 122, 0xFFFF);
 
-  display.drawLine(56,   32 + 88, 56,   36 + 88, 0xFFFF);
-  display.drawLine(64 + 56,  32 + 88, 64 + 56,  36 + 88, 0xFFFF);
-  display.drawLine(127 + 56, 32 + 88, 127 + 56, 36 + 88, 0xFFFF);
-
-  display.drawLine(32 + 56, 33 + 88, 32 + 56, 35 + 88, 0xFFFF);
-  display.drawLine(96 + 56, 33 + 88, 96 + 56, 35 + 88, 0xFFFF);
+  display.drawLine(56,  120, 56,  124, 0xFFFF);
+  display.drawLine(88,  121, 88,  123, 0xFFFF);
+  display.drawLine(120, 120, 120, 124, 0xFFFF);
+  display.drawLine(152, 121, 152, 123, 0xFFFF);
+  display.drawLine(183, 120, 183, 124, 0xFFFF);
 
   float min=2;
   float max=6;
@@ -205,7 +204,7 @@ void ui::update_display(rx_status & status, rx & receiver)
       int16_t y = scale*(log10f(spectrum[x])-min);
       if(y < 0) y=0;
       if(y > 31) y=31;
-      display.drawLine(x + 56, 63-y + 88, x + 56, 63 + 88, 0xFFFF);
+      display.drawLine(x + 56, 151 - y, x + 56, 151, 0xFFFF);
   }
 
   // ssd1306_show(&disp);
