@@ -1,10 +1,10 @@
 #ifndef __UI_TYPES_H__
 #define __UI_TYPES_H__
 
-typedef union Pixel_t
+typedef union Color_t
 { 
-  Pixel_t() : raw(0) {};
-  Pixel_t(uint16_t color) : raw(color) {};
+  Color_t() : raw(0) {};
+  Color_t(uint16_t color) : raw(color) {};
   uint16_t raw;
   struct 
   {
@@ -12,7 +12,7 @@ typedef union Pixel_t
     uint16_t g:6;
     uint16_t b:5;
   };
-} Pixel_t;
+} Color_t;
 
 typedef struct Point_t
 {

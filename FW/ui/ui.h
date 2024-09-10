@@ -49,8 +49,8 @@ class ui
 {
 
   private:
-  GC9A01A display = GC9A01A(pSPIInstance, PIN_DISPLAY_SCK, PIN_DISPLAY_DO, PIN_DISPLAY_DC, PIN_DISPLAY_CS);
   FontSimple5x8_t fontSimple5x8 = FontSimple5x8_t();
+  GC9A01A display = GC9A01A(pSPIInstance, PIN_DISPLAY_SCK, PIN_DISPLAY_DO, PIN_DISPLAY_DC, PIN_DISPLAY_CS);
 
   uint32_t settings[16];
   const uint32_t step_sizes[10] = {10, 50, 100, 1000, 5000, 10000, 12500, 25000, 50000, 100000};

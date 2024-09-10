@@ -151,21 +151,25 @@ void ui::update_display(rx_status & status, rx & receiver)
   kHz = remainder/1000u;
   remainder = remainder%1000u; 
   Hz = remainder;
+  Canvas_t * canvas = new Canvas_t(120, 10);
+  canvas->drawText(&fontSimple5x8, 0, 0, (char *)"Hello!", Color_t(0xFFE0));
+  display.blit(canvas, Rect_t(0, 0, 119, 9), Point_t(120, 120));
+  delete canvas;
   snprintf(buff, 21, "%2lu.%03lu", MHz, kHz);
-  display.drawString(56, 88, 2, buff);
+  // display.drawString(56, 88, 2, buff);
   snprintf(buff, 21, ".%03lu", Hz);
-  display.drawString(72 + 56, 88, 1, buff);
+  // display.drawString(72 + 56, 88, 1, buff);
 
   //mode
-  static const char modes[][4]  = {" AM", "LSB", "USB", " FM", " CW"};
-  display.drawString(158, 88, 1, modes[settings[idx_mode]]);
+  // static const char modes[][4]  = {" AM", "LSB", "USB", " FM", " CW"};
+  // display.drawString(158, 88, 1, modes[settings[idx_mode]]);
 
   //step
-  static const char steps[][8]  = {
-    "   10Hz", "   50Hz", "  100Hz", "   1kHz",
-    "   5kHz", "  10kHz", "12.5kHz", "  25kHz", 
-    "  50kHz", " 100kHz"};
-  display.drawString(78 + 56, 8 + 88, 1, steps[settings[idx_step]]);
+  // static const char steps[][8]  = {
+  //   "   10Hz", "   50Hz", "  100Hz", "   1kHz",
+  //   "   5kHz", "  10kHz", "12.5kHz", "  25kHz", 
+  //   "  50kHz", " 100kHz"};
+  // display.drawString(78 + 56, 8 + 88, 1, steps[settings[idx_step]]);
 
   //signal strength/cpu
   static const char smeter[][12]  = {
@@ -178,9 +182,9 @@ void ui::update_display(rx_status & status, rx & receiver)
   if(power_s < 0) power_s = 0;
   if(power_s > 12) power_s = 12;
   snprintf(buff, 21, "%s  % 4.0fdBm", smeter[power_s], power_dBm);
-  display.drawString(56, 112, 1, buff);
+  // display.drawString(56, 112, 1, buff);
   snprintf(buff, 21, "       %2.1fV %2.0f%cC %2.0f%%", battery_voltage, temp, '\x7f', (100.0f*busy_time)/block_time);
-  display.drawString(56, 104, 1, buff);
+  // display.drawString(56, 104, 1, buff);
 
   //Display spectrum capture
   static float spectrum[128];
@@ -188,11 +192,11 @@ void ui::update_display(rx_status & status, rx & receiver)
   receiver.get_spectrum(spectrum, offset);
   // display.drawLine(56,  122, 183, 122, 0xFFFF);
 
-  display.drawLine(56,  120, 56,  124, 0xFFFF);
-  display.drawLine(88,  121, 88,  123, 0xFFFF);
-  display.drawLine(120, 120, 120, 124, 0xFFFF);
-  display.drawLine(152, 121, 152, 123, 0xFFFF);
-  display.drawLine(183, 120, 183, 124, 0xFFFF);
+  // display.drawLine(56,  120, 56,  124, 0xFFFF);
+  // display.drawLine(88,  121, 88,  123, 0xFFFF);
+  // display.drawLine(120, 120, 120, 124, 0xFFFF);
+  // display.drawLine(152, 121, 152, 123, 0xFFFF);
+  // display.drawLine(183, 120, 183, 124, 0xFFFF);
 
   float min=2;
   float max=6;
@@ -204,7 +208,7 @@ void ui::update_display(rx_status & status, rx & receiver)
       int16_t y = scale*(log10f(spectrum[x])-min);
       if(y < 0) y=0;
       if(y > 31) y=31;
-      display.drawLine(x + 56, 151 - y, x + 56, 151, 0xFFFF);
+      // display.drawLine(x + 56, 151 - y, x + 56, 151, 0xFFFF);
   }
 
   // ssd1306_show(&disp);

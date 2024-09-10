@@ -41,7 +41,7 @@ GC9A01A::GC9A01A(spi_inst_t * spi, uint32_t pin_sck, uint32_t pin_do, uint32_t p
     vBuf[i] = 0;
   writeInitSequence();
 
-  Pixel_t clr = Pixel_t(0x0001);
+  Color_t clr = Color_t(0x0001);
   const uint32_t _w = 240 / 16;
   for(uint32_t i=0; i<16; i++)
   {
@@ -59,12 +59,12 @@ GC9A01A::GC9A01A(spi_inst_t * spi, uint32_t pin_sck, uint32_t pin_do, uint32_t p
 
 void GC9A01A::blit(Surface_t * src, Rect_t from, Point_t to)
 {
-  uint32_t x2 = to.x  + from.w - 1;
+  uint32_t x2 = to.x  + from.w ;
   CheckResult_t r = getIntersection(from, to);
   if (r == CHECK_RESULT_NO_INTERSECTION) return;
   if (r == CHECK_RESULT_FITS)
   {
-    uint32_t y2 = to.y  + from.h - 1;
+    uint32_t y2 = to.y  + from.h ;
     setViewport(to.x, to.y, x2, y2);
     pushPixelsDMA(src->getPixels(), from.w * from.h);
   }
@@ -72,24 +72,24 @@ void GC9A01A::blit(Surface_t * src, Rect_t from, Point_t to)
   {
     for (uint32_t scanline = from.y; scanline < (from.y + from.h - 1); scanline++)
     {
-      Pixel_t * org = src->getPixels() + (scanline * src->getWidth()) + from.x;
+      Color_t * org = src->getPixels() + (scanline * src->getWidth()) + from.x;
       setViewport(to.x, scanline, x2, scanline);
       pushPixelsDMA(org, from.w);
     }
   }
 }
 
-void GC9A01A::drawLine(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2, uint16_t color = 0xFFFF)
-{
-  setViewport(x1, y1, x2, y2);
-  const uint32_t square = (x2 - x1 + 1) * (y2 - y1 + 1);
-  Pixel_t buffer[square];
+// void GC9A01A::drawLine(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2, uint16_t color = 0xFFFF)
+// {
+//   setViewport(x1, y1, x2, y2);
+//   const uint32_t square = (x2 - x1 + 1) * (y2 - y1 + 1);
+//   Color_t buffer[square];
 
-  for(uint32_t j=0; j<square; j++)
-    buffer[j].raw = color;
+//   for(uint32_t j=0; j<square; j++)
+//     buffer[j].raw = color;
 
-  pushPixelsDMA(&buffer[0], square);
-}
+//   pushPixelsDMA(&buffer[0], square);
+// }
 
 void GC9A01A::fill(uint16_t color)
 {
@@ -115,8 +115,8 @@ void GC9A01A::drawChar(uint32_t x, uint32_t y, uint32_t scale, const char c)
   const uint32_t bufWidth = chrWidth + chrSpacing;
   
   Canvas_t * canvas = new Canvas_t(bufWidth, chrHeiht);
-  canvas->fill(Pixel_t(0));
-  Pixel_t * pixels = canvas->getPixels();
+  canvas->fill(Color_t(0));
+  Color_t * pixels = canvas->getPixels();
 
   for (uint32_t col=0; col<chrWidth; col++)
   {
@@ -217,7 +217,7 @@ void GC9A01A::dmaWait()
   // while (spi_get_hw(spi)->sr & SPI_SSPSR_BSY_BITS) {};
 }
 
-void GC9A01A::pushPixelsDMA(Pixel_t * image, uint32_t len)
+void GC9A01A::pushPixelsDMA(Color_t * image, uint32_t len)
 {
   if (len == 0) return;
   dmaWait();
