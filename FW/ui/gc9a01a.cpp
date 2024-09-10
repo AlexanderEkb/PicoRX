@@ -8,8 +8,6 @@
 
 #include "font_5x7.h"
 
-static uint8_t vBuf[240 * 240 * 2];
-
 GC9A01A::GC9A01A(spi_inst_t * spi, uint32_t pin_sck, uint32_t pin_do, uint32_t pin_dc, uint32_t pin_cs)
 {
   this->spi     = spi;
@@ -35,10 +33,6 @@ GC9A01A::GC9A01A(spi_inst_t * spi, uint32_t pin_sck, uint32_t pin_do, uint32_t p
 
   channel_config_set_transfer_data_size(&dma_tx_config, DMA_SIZE_16);
   channel_config_set_dreq(&dma_tx_config, spi_get_index(spi) ? DREQ_SPI1_TX : DREQ_SPI0_TX);
-
-
-  for(uint32_t i=0; i<240*240*2; i++)
-    vBuf[i] = 0;
   writeInitSequence();
 
   Color_t clr = Color_t(0x0001);
@@ -59,12 +53,12 @@ GC9A01A::GC9A01A(spi_inst_t * spi, uint32_t pin_sck, uint32_t pin_do, uint32_t p
 
 void GC9A01A::blit(Surface_t * src, Rect_t from, Point_t to)
 {
-  uint32_t x2 = to.x  + from.w ;
+  uint32_t x2 = to.x  + from.w;
   CheckResult_t r = getIntersection(from, to);
   if (r == CHECK_RESULT_NO_INTERSECTION) return;
   if (r == CHECK_RESULT_FITS)
   {
-    uint32_t y2 = to.y  + from.h ;
+    uint32_t y2 = to.y  + from.h - 1;
     setViewport(to.x, to.y, x2, y2);
     pushPixelsDMA(src->getPixels(), from.w * from.h);
   }
@@ -78,18 +72,6 @@ void GC9A01A::blit(Surface_t * src, Rect_t from, Point_t to)
     }
   }
 }
-
-// void GC9A01A::drawLine(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2, uint16_t color = 0xFFFF)
-// {
-//   setViewport(x1, y1, x2, y2);
-//   const uint32_t square = (x2 - x1 + 1) * (y2 - y1 + 1);
-//   Color_t buffer[square];
-
-//   for(uint32_t j=0; j<square; j++)
-//     buffer[j].raw = color;
-
-//   pushPixelsDMA(&buffer[0], square);
-// }
 
 void GC9A01A::fill(uint16_t color)
 {

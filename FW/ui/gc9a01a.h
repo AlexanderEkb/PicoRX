@@ -20,7 +20,6 @@ class GC9A01A : public Surface_t
     void fill(uint16_t color);
     void flip(bool flip);
 
-    // void drawLine(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2, uint16_t color);
     void drawChar(uint32_t x, uint32_t y, uint32_t scale, const char c);
     void drawString(uint32_t x, uint32_t y, uint32_t scale, const char * s);
   private:

@@ -5,6 +5,7 @@ typedef union Color_t
 { 
   Color_t() : raw(0) {};
   Color_t(uint16_t color) : raw(color) {};
+  Color_t(uint16_t r, uint16_t g, uint16_t b) : r(r), g(g), b(b) {};
   uint16_t raw;
   struct 
   {

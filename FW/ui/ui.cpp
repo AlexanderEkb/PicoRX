@@ -151,14 +151,14 @@ void ui::update_display(rx_status & status, rx & receiver)
   kHz = remainder/1000u;
   remainder = remainder%1000u; 
   Hz = remainder;
+
   Canvas_t * canvas = new Canvas_t(120, 10);
-  canvas->drawText(&fontSimple5x8, 0, 0, (char *)"Hello!", Color_t(0xFFE0));
-  display.blit(canvas, Rect_t(0, 0, 119, 9), Point_t(120, 120));
+  canvas->fill(0x001F);
+  snprintf(buff, 21, "%2lu.%03lu.%03lu", MHz, kHz, Hz);
+  canvas->drawText(&fontSimple5x8, 0, 0, buff, Color_t(0x07FF));
+  display.blit(canvas, Rect_t(0, 0, 119, 9), Point_t(120, 90));
   delete canvas;
-  snprintf(buff, 21, "%2lu.%03lu", MHz, kHz);
-  // display.drawString(56, 88, 2, buff);
-  snprintf(buff, 21, ".%03lu", Hz);
-  // display.drawString(72 + 56, 88, 1, buff);
+
 
   //mode
   // static const char modes[][4]  = {" AM", "LSB", "USB", " FM", " CW"};
@@ -190,28 +190,30 @@ void ui::update_display(rx_status & status, rx & receiver)
   static float spectrum[128];
   int16_t offset;
   receiver.get_spectrum(spectrum, offset);
-  // display.drawLine(56,  122, 183, 122, 0xFFFF);
-
-  // display.drawLine(56,  120, 56,  124, 0xFFFF);
-  // display.drawLine(88,  121, 88,  123, 0xFFFF);
-  // display.drawLine(120, 120, 120, 124, 0xFFFF);
-  // display.drawLine(152, 121, 152, 123, 0xFFFF);
-  // display.drawLine(183, 120, 183, 124, 0xFFFF);
 
   float min=2;
   float max=6;
   float scale = 32.0f/(max-min);
 
   //plot
-  for(uint16_t x=0; x<128; x++)
+  Canvas_t * waterline = waterfall[waterfall_bottom];
+  Color_t * pixels = waterline->getPixels();
+  for(uint16_t x=0; x<WATERFALL_WIDTH; x++)
   {
       int16_t y = scale*(log10f(spectrum[x])-min);
       if(y < 0) y=0;
       if(y > 31) y=31;
-      // display.drawLine(x + 56, 151 - y, x + 56, 151, 0xFFFF);
+      pixels[x].raw = gradient[y].raw;
   }
 
-  // ssd1306_show(&disp);
+  uint32_t index = waterfall_bottom;
+  for(uint32_t i=0; i<WATERFALL_HEIGHT; i++)
+  {
+    display.blit(waterfall[index], Rect_t(0, 0, WATERFALL_WIDTH, 1), Point_t(WATERFALL_LEFT, WATERFALL_TOP + i));
+    if(++index >= WATERFALL_HEIGHT) index = 0;
+  }
+  waterfall_bottom++;
+  if(waterfall_bottom >= WATERFALL_HEIGHT) waterfall_bottom = 0;
 
 }
 
@@ -1214,6 +1216,26 @@ void ui::do_ui(void)
 
 ui::ui(rx_settings & settings_to_apply, rx_status & status, rx &receiver) : settings_to_apply(settings_to_apply), status(status), receiver(receiver)
 {
+  const Color_t start = Color_t(0, 0, 4);
+  const Color_t mid   = Color_t(15, 31, 0);
+  const Color_t end   = Color_t(31, 63, 31);
+  for (int32_t i=15; i>=0; i--)
+  {
+    int32_t j = 15-i;
+    gradient[j].r = (start.r * i + mid.r * j) / 15;
+    gradient[j].g = (start.g * i + mid.g * j) / 15;
+    gradient[j].b = (start.b * i + mid.b * j) / 15;
+    gradient[j + 16].r = (mid.r * i + end.r * j) / 15;
+    gradient[j + 16].g = (mid.g * i + end.g * j) / 15;
+    gradient[j + 16].b = (mid.b * i + end.b * j) / 15;
+  }
+
+  for (uint32_t i=0; i<WATERFALL_HEIGHT; i++)
+  {
+    waterfall[i] = new Canvas_t(WATERFALL_WIDTH, 1);
+    waterfall[i]->fill(Color_t(0x0000));
+  }
+
   setup_encoder();
   setup_buttons();
 
