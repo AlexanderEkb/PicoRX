@@ -80,6 +80,34 @@ class Canvas_t : public Surface_t
             pixels[i].raw = color.raw;
         }
       }
+
+      virtual void drawText(Font_t * font, uint32_t x, uint32_t y, char * text, Pixel_t color)
+      {
+        assert(font);
+        uint32_t textWidth = font->getTextWidth(text);
+        uint32_t textHeight = font->getFontHeight();
+        Rect_t textRect = Rect_t(x, y, textWidth, textHeight);
+        Point_t dest = Point_t(x, y);
+        if (getIntersection(textRect, dest) == CHECK_RESULT_NO_INTERSECTION) return;
+        uint32_t _x = x;
+        while (*text)
+        {
+          uint32_t boxWidth = font->getBoxWidth(*text);
+          for (uint32_t _y=0; _y<textHeight; _y++)
+          {
+            uint32_t _org = (y + _y) * getWidth() + _x;
+            Pixel_t * scanline = font->getScanline(*text, _y);
+            for(uint32_t i=0; i<boxWidth; i++)
+            {
+              Pixel_t * pixel = &pixels[_org + i];
+
+              (void)pixel;
+              (void)scanline;
+              /* Mix colors */
+            }
+          }
+        }
+      }
   protected:
     uint32_t width;
     uint32_t height;
