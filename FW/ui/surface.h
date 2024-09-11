@@ -15,6 +15,7 @@ class Surface_t
     virtual uint32_t getHeight() = 0;
     virtual Color_t * getPixels() = 0;
     virtual void blit(Surface_t * src, Rect_t from, Point_t to) = 0;
+    virtual void fill(Color_t color) = 0;
   protected:
     typedef enum CheckResult_t
     {

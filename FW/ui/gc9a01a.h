@@ -17,7 +17,7 @@ class GC9A01A : public Surface_t
     virtual Color_t * getPixels() {return nullptr;};
     virtual void blit(Surface_t * src, Rect_t from, Point_t to);
 
-    void fill(uint16_t color);
+    virtual void fill(Color_t color);
     void flip(bool flip);
 
     void drawChar(uint32_t x, uint32_t y, uint32_t scale, const char c);

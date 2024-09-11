@@ -12,6 +12,7 @@
 
 #include "font_5x7.h"
 #include "fonts/font_Simple5x8.h"
+#include "fonts/font_Smooth10x14.h"
 
 #include "../rx/rx.h"
 #include "memory.h"

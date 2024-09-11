@@ -73,13 +73,13 @@ void GC9A01A::blit(Surface_t * src, Rect_t from, Point_t to)
   }
 }
 
-void GC9A01A::fill(uint16_t color)
+void GC9A01A::fill(Color_t color)
 {
   setViewport(0, 0, 239, 239);
   startTransfer();
   for (uint32_t i=0; i<240*240/2; i++)
   {
-    writeData32((color << 16) | color);
+    writeData32((color.raw << 16) | color.raw);
   }
 }
 
