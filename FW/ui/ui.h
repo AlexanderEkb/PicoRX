@@ -51,6 +51,7 @@ class ui
 
   private:
   FontSimple5x8_t fontSimple5x8 = FontSimple5x8_t();
+  FontSmooth10x14_t fontSmooth10x14 = FontSmooth10x14_t();
   GC9A01A display = GC9A01A(pSPIInstance, PIN_DISPLAY_SCK, PIN_DISPLAY_DO, PIN_DISPLAY_DC, PIN_DISPLAY_CS);
   Color_t gradient[32];
   static const uint32_t WATERFALL_WIDTH = 128;

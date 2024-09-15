@@ -152,24 +152,22 @@ void ui::update_display(rx_status & status, rx & receiver)
   remainder = remainder%1000u; 
   Hz = remainder;
 
-  Canvas_t * canvas = new Canvas_t(120, 10);
-  canvas->fill(0x001F);
+  Canvas_t * canvas = new Canvas_t(120, 80);
+  canvas->fill(0x0000);
   snprintf(buff, 21, "%2lu.%03lu.%03lu", MHz, kHz, Hz);
-  canvas->drawText(&fontSimple5x8, 0, 0, buff, Color_t(0x07FF));
-  display.blit(canvas, Rect_t(0, 0, 119, 9), Point_t(120, 90));
+  // canvas->drawText(&fontSimple5x8, 0, 0, buff, Color_t(0x07FF));
+  canvas->drawText(&fontSmooth10x14, 0, 3, (char *)"Frequency:", Color_t(0x07FF));
+  canvas->drawText(&fontSmooth10x14, 0, 20, buff, Color_t(0x07E0));
+  static const char modes[][4]  = {" AM", "LSB", "USB", " FM", " CW"};
+  canvas->drawText(&fontSmooth10x14, 0, 37, modes[settings[idx_mode]], 0xFFFF);
+  static const char steps[][8]  = {
+    "   10Hz", "   50Hz", "  100Hz", "   1kHz",
+    "   5kHz", "  10kHz", "12.5kHz", "  25kHz", 
+    "  50kHz", " 100kHz"};
+  canvas->drawText(&fontSmooth10x14, 50, 37, steps[settings[idx_step]], 0xFFE0);
+  display.blit(canvas, Rect_t(0, 0, 119, 80), Point_t(60, 30));
   delete canvas;
 
-
-  //mode
-  // static const char modes[][4]  = {" AM", "LSB", "USB", " FM", " CW"};
-  // display.drawString(158, 88, 1, modes[settings[idx_mode]]);
-
-  //step
-  // static const char steps[][8]  = {
-  //   "   10Hz", "   50Hz", "  100Hz", "   1kHz",
-  //   "   5kHz", "  10kHz", "12.5kHz", "  25kHz", 
-  //   "  50kHz", " 100kHz"};
-  // display.drawString(78 + 56, 8 + 88, 1, steps[settings[idx_step]]);
 
   //signal strength/cpu
   static const char smeter[][12]  = {

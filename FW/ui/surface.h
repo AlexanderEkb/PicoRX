@@ -82,7 +82,7 @@ class Canvas_t : public Surface_t
         }
       }
 
-      virtual void drawText(Font_t * font, uint32_t x, uint32_t y, char * text, Color_t color)
+      virtual void drawText(Font_t * font, uint32_t x, uint32_t y, char const * text, Color_t color)
       {
         uint32_t textWidth = font->getTextWidth(text);
         uint32_t textHeight = font->getFontHeight();

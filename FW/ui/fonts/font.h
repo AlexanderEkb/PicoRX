@@ -11,7 +11,7 @@ class Font_t
     virtual uint32_t getCharWidth(uint32_t chr) = 0;
     virtual uint32_t getBoxWidth(uint32_t chr) = 0;
     virtual uint32_t getFontHeight() = 0;
-    virtual uint32_t getTextWidth(char * text)
+    virtual uint32_t getTextWidth(char const * text)
     {
       uint32_t result = 0;
       while (*text)
@@ -110,7 +110,7 @@ class Antialiased_4_BitmapFont_t : public Font_t
               rem = DOTS_PER_BYTE;
             }
 
-            cache[row * boxWidth + col].raw = buffer[--rem].raw;
+            cache[row * boxWidth + (boxWidth - col) - 1].raw = buffer[--rem].raw;
           }
         }
       }
