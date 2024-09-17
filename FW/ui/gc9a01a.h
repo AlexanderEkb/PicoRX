@@ -37,7 +37,6 @@ class GC9A01A : public Surface_t
     void writeCommand(uint8_t cmd);
     void writeData(uint8_t data);
     void setViewport(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2);
-    void startTransfer();
     void dmaWait();
     void pushPixelsDMA(Color_t * image, uint32_t len);
     void writeData32(uint32_t data);

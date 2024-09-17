@@ -13,6 +13,11 @@ typedef union Color_t
     uint16_t g:6;
     uint16_t b:5;
   };
+  Color_t & operator= (uint16_t rvalue)
+  {
+    raw = rvalue;
+    return *this;
+  }
 } Color_t;
 
 typedef struct Point_t

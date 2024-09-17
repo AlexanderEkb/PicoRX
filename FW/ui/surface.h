@@ -92,9 +92,9 @@ class Canvas_t : public Surface_t
         while (*text)
         {
           uint32_t boxWidth = font->getBoxWidth(*text);
+          uint32_t org = y * getWidth() + x;
           for (uint32_t row=0; row<textHeight; row++)
           {
-            uint32_t org = (y + row) * getWidth() + x;
             Color_t * scanline = font->getScanline(*text, row);
             for(uint32_t col=0; col<boxWidth; col++)
             {
@@ -108,6 +108,7 @@ class Canvas_t : public Surface_t
               dest->g = g;
               dest->b = b;
             }
+            org += getWidth();
           }
           x += boxWidth;
           text++;

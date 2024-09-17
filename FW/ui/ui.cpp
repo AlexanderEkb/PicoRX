@@ -157,15 +157,15 @@ void ui::update_display(rx_status & status, rx & receiver)
   snprintf(buff, 21, "%2lu.%03lu.%03lu", MHz, kHz, Hz);
   // canvas->drawText(&fontSimple5x8, 0, 0, buff, Color_t(0x07FF));
   canvas->drawText(&fontSmooth10x14, 0, 3, (char *)"Frequency:", Color_t(0x07FF));
-  canvas->drawText(&fontSmooth10x14, 0, 20, buff, Color_t(0x07E0));
+  canvas->drawText(&fontSmooth10x14, 0, 25, buff, Color_t(0x07E0));
   static const char modes[][4]  = {" AM", "LSB", "USB", " FM", " CW"};
-  canvas->drawText(&fontSmooth10x14, 0, 37, modes[settings[idx_mode]], 0xFFFF);
+  canvas->drawText(&fontSmooth10x14, 0, 47, modes[settings[idx_mode]], 0xFFFF);
   static const char steps[][8]  = {
     "   10Hz", "   50Hz", "  100Hz", "   1kHz",
     "   5kHz", "  10kHz", "12.5kHz", "  25kHz", 
     "  50kHz", " 100kHz"};
-  canvas->drawText(&fontSmooth10x14, 50, 37, steps[settings[idx_step]], 0xFFE0);
-  display.blit(canvas, Rect_t(0, 0, 119, 80), Point_t(60, 30));
+  canvas->drawText(&fontSmooth10x14, 50, 47, steps[settings[idx_step]], 0xFFE0);
+  display.blit(canvas, Rect_t(0, 0, 120, 80), Point_t(60, 30));
   delete canvas;
 
 

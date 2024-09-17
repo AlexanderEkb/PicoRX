@@ -5,42 +5,12 @@ else()
     set(USERHOME $ENV{HOME})
 endif()
 set(sdkVersion 2.0.0)
-set(toolchainVersion 13_2_Rel1)
+set(toolchainVersion 13_3_Rel1)
 set(picotoolVersion 2.0.0)
-include(${USERHOME}/.pico-sdk/cmake/pico-vscode.cmake)
-# ====================================================================================
-# == DO NEVER EDIT THE NEXT LINES for Raspberry Pi Pico VS Code Extension to work ==
-if(WIN32)
-    set(USERHOME $ENV{USERPROFILE})
-else()
-    set(USERHOME $ENV{HOME})
+set(picoVscode ${USERHOME}/.pico-sdk/cmake/pico-vscode.cmake)
+if (EXISTS ${picoVscode})
+    include(${picoVscode})
 endif()
-set(sdkVersion 2.0.0)
-set(toolchainVersion 13_2_Rel1)
-set(picotoolVersion 2.0.0)
-include(${USERHOME}/.pico-sdk/cmake/pico-vscode.cmake)
-# ====================================================================================
-# == DO NEVER EDIT THE NEXT LINES for Raspberry Pi Pico VS Code Extension to work ==
-if(WIN32)
-    set(USERHOME $ENV{USERPROFILE})
-else()
-    set(USERHOME $ENV{HOME})
-endif()
-set(sdkVersion 2.0.0)
-set(toolchainVersion 13_2_Rel1)
-set(picotoolVersion 2.0.0)
-include(${USERHOME}/.pico-sdk/cmake/pico-vscode.cmake)
-# ====================================================================================
-# == DO NEVER EDIT THE NEXT LINES for Raspberry Pi Pico VS Code Extension to work ==
-if(WIN32)
-    set(USERHOME $ENV{USERPROFILE})
-else()
-    set(USERHOME $ENV{HOME})
-endif()
-set(sdkVersion 2.0.0)
-set(toolchainVersion 13_2_Rel1)
-set(picotoolVersion 2.0.0)
-include(${USERHOME}/.pico-sdk/cmake/pico-vscode.cmake)
 # ====================================================================================
 cmake_minimum_required(VERSION 3.12)
 
@@ -63,10 +33,10 @@ if(PICO_BOARD STREQUAL "pico")
       rx/rx_dsp.cpp
       rx/half_band_filter.cpp
       rx/half_band_filter2.cpp
-      # ui/TFT_eSPI.cpp
       ui/gc9a01a.cpp
       ui/ui.cpp
-  )
+      ui/logo.cpp
+      )
   pico_generate_pio_header(picorx ${CMAKE_CURRENT_LIST_DIR}/rx/nco.pio)
   pico_generate_pio_header(picorx ${CMAKE_CURRENT_LIST_DIR}/ui/quadrature_encoder.pio)
   pico_add_extra_outputs(picorx)
@@ -89,10 +59,10 @@ elseif(PICO_BOARD STREQUAL "pico2")
         rx/rx_dsp.cpp
         rx/half_band_filter.cpp
         rx/half_band_filter2.cpp
-        # ui/TFT_eSPI.cpp
         ui/gc9a01a.cpp
         ui/ui.cpp
-  )
+        ui/logo.cpp
+        )
     pico_generate_pio_header(pico2rx-riscv ${CMAKE_CURRENT_LIST_DIR}/rx/nco.pio)
     pico_generate_pio_header(pico2rx-riscv ${CMAKE_CURRENT_LIST_DIR}/ui/quadrature_encoder.pio)
     pico_add_extra_outputs(pico2rx-riscv)
@@ -112,10 +82,10 @@ elseif(PICO_BOARD STREQUAL "pico2")
         rx/rx_dsp.cpp
         rx/half_band_filter.cpp
         rx/half_band_filter2.cpp
-        # ui/TFT_eSPI.cpp
         ui/gc9a01a.cpp
         ui/ui.cpp
-  )
+        ui/logo.cpp
+        )
     pico_generate_pio_header(pico2rx ${CMAKE_CURRENT_LIST_DIR}/rx/nco.pio)
     pico_generate_pio_header(pico2rx ${CMAKE_CURRENT_LIST_DIR}/ui/quadrature_encoder.pio)
     pico_add_extra_outputs(pico2rx)

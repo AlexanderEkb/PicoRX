@@ -7,6 +7,7 @@
 #include "pico/stdlib.h"
 
 #include "font_5x7.h"
+#include "logo.h"
 
 GC9A01A::GC9A01A(spi_inst_t * spi, uint32_t pin_sck, uint32_t pin_do, uint32_t pin_dc, uint32_t pin_cs)
 {
@@ -35,39 +36,52 @@ GC9A01A::GC9A01A(spi_inst_t * spi, uint32_t pin_sck, uint32_t pin_do, uint32_t p
   channel_config_set_dreq(&dma_tx_config, spi_get_index(spi) ? DREQ_SPI1_TX : DREQ_SPI0_TX);
   writeInitSequence();
 
-  Color_t clr = Color_t(0x0001);
-  const uint32_t _w = 240 / 16;
-  for(uint32_t i=0; i<16; i++)
-  {
-    uint32_t x1 = (_w) * i;
-    Canvas_t * canvas = new Canvas_t(240 / 16, 240);
-    canvas->fill(clr);
-    blit(canvas, Rect_t(0, 0, _w, 240), Point_t(x1, 0));
-    dmaWait();
-    delete canvas;
-    clr.raw <<= 1;
-  }
+  // setViewport(0, 0, 239, 238);
+  // writeCommandEx(0x2C, 0);
+  // gpio_put(pin_dc, 1);
+  // pushPixelsDMA((Color_t *)&logoPixels[0], 240 * 239);
+  Logo_t * logo = new Logo_t();
+  blit(logo, Rect_t(0, 0, 240, 239), Point_t(0, 0));
+  delete logo;
+  writeCommand(0x29);   // Display ON
+  sleep_us(20000);
 
-  // while(true);
+  // Color_t clr = Color_t(0x0001);
+  // Canvas_t * canvas = new Canvas_t(15, 240);
+  // assert(canvas);
+  // for(uint32_t i=0; i<16; i++)
+  // {
+  //   uint32_t x = 15 * i;
+  //   canvas->fill(clr);
+  //   blit(canvas, Rect_t(0, 0, 15, 240), Point_t(x, 0));
+  //   dmaWait();  // Required to preserve the contents of the surface during transmission!
+  //   clr.raw <<= 1;
+  // }
+  // delete canvas;
+
+  // while(1);
 }
 
 void GC9A01A::blit(Surface_t * src, Rect_t from, Point_t to)
 {
-  uint32_t x2 = to.x  + from.w;
   CheckResult_t r = getIntersection(from, to);
+  uint32_t x2 = to.x + from.w - 1;
+  uint32_t y2 = to.y  + from.h - 1;
   if (r == CHECK_RESULT_NO_INTERSECTION) return;
+  setViewport(to.x, to.y, x2, y2);
   if (r == CHECK_RESULT_FITS)
   {
-    uint32_t y2 = to.y  + from.h - 1;
-    setViewport(to.x, to.y, x2, y2);
+    writeCommandEx(0x2C, 0);
+    gpio_put(pin_dc, 1);
     pushPixelsDMA(src->getPixels(), from.w * from.h);
   }
   else
   {
+    writeCommandEx(0x2C, 0);
+    gpio_put(pin_dc, 1);
     for (uint32_t scanline = from.y; scanline < (from.y + from.h - 1); scanline++)
     {
       Color_t * org = src->getPixels() + (scanline * src->getWidth()) + from.x;
-      setViewport(to.x, scanline, x2, scanline);
       pushPixelsDMA(org, from.w);
     }
   }
@@ -76,7 +90,7 @@ void GC9A01A::blit(Surface_t * src, Rect_t from, Point_t to)
 void GC9A01A::fill(Color_t color)
 {
   setViewport(0, 0, 239, 239);
-  startTransfer();
+  writeCommandEx(0x2C, 0);
   for (uint32_t i=0; i<240*240/2; i++)
   {
     writeData32((color.raw << 16) | color.raw);
@@ -144,27 +158,27 @@ void GC9A01A::setViewport(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2)
 
 void GC9A01A::writeCommandEx(uint8_t command, uint32_t count, ...)
 {
+  static uint8_t cmd;
+
   dmaWait();
   spi_set_format(spi, 8, SPI_CPOL_1, SPI_CPHA_1, SPI_MSB_FIRST);
   channel_config_set_transfer_data_size(&dma_tx_config, DMA_SIZE_8);
   gpio_put(pin_dc, 0);
-  dma_channel_configure(dma_tx_channel, &dma_tx_config, &spi_get_hw(spi)->dr, &command, 1, true);
+  cmd = command;
+  dma_channel_configure(dma_tx_channel, &dma_tx_config, &spi_get_hw(spi)->dr, &cmd, 1, true);
 
+  dmaWait();
+  gpio_put(pin_dc, 1);
   if (count > 0)
   {
     va_list args;
     va_start(args, count);
-    uint8_t parameters[count];
+    volatile uint8_t parameters[count];
     for(uint32_t i=0; i<count; i++)
       parameters[i] = static_cast<uint8_t>(va_arg(args, int));
     va_end(args);
-
-    dmaWait();
-    gpio_put(pin_dc, 1);
     dma_channel_configure(dma_tx_channel, &dma_tx_config, &spi_get_hw(spi)->dr, parameters, count, true);
   }
-
-  dmaWait();
 }
 
 void GC9A01A::writeCommand(uint8_t cmd)
@@ -185,12 +199,6 @@ void GC9A01A::writeData(uint8_t data)
   spi_write_blocking(spi, &data, 1);
 }
 
-void GC9A01A::startTransfer()
-{
-  writeCommandEx(0x2C, 0);
-  gpio_put(pin_dc, 1);
-}
-
 void GC9A01A::dmaWait()
 {
   while (dma_channel_is_busy(dma_tx_channel));
@@ -203,7 +211,6 @@ void GC9A01A::pushPixelsDMA(Color_t * image, uint32_t len)
 {
   if (len == 0) return;
   dmaWait();
-  startTransfer();
 
   spi_set_format(spi, 16, SPI_CPOL_1, SPI_CPHA_1, SPI_MSB_FIRST);
   channel_config_set_transfer_data_size(&dma_tx_config, DMA_SIZE_16);
@@ -215,7 +222,11 @@ void GC9A01A::pushPixelsDMA(Color_t * image, uint32_t len)
 
 void GC9A01A::writeData32(uint32_t data)
 {
-  // spi_write_blocking(spi, reinterpret_cast<uint8_t *>(&data), 4);
+  dmaWait();
+  spi_set_format(spi, 8, SPI_CPOL_1, SPI_CPHA_1, SPI_MSB_FIRST);
+  channel_config_set_transfer_data_size(&dma_tx_config, DMA_SIZE_8);
+  gpio_put(pin_dc, 1);
+  spi_write_blocking(spi, reinterpret_cast<uint8_t *>(&data), 4);
 }
 
 void GC9A01A::writeInitSequence()
@@ -445,6 +456,4 @@ void GC9A01A::writeInitSequence()
 
   writeCommand(0x11);   // Out Of Sleep
   sleep_us(120000);
-  writeCommand(0x29);   // Display ON
-  sleep_us(20000);
 }
